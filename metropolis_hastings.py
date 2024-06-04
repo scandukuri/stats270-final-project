@@ -48,7 +48,6 @@ def plot_diagnostics(sampler_num, samples, parameter_indices, parameter_names):
 
 
 # PROPOSAL DISTRIBUTIONS
-
 def propose_log_normal(current, proposal_sd=0.1):
     return np.exp(np.random.normal(np.log(current), proposal_sd))
 
@@ -61,10 +60,6 @@ def propose_normal(current, proposal_sd=0.1):
     return np.random.normal(current, proposal_sd)
 
 
-def propose_cauchy(current, scale=0.1):
-    return current + np.random.standard_cauchy() * scale
-
-
 def propose_beta(current, a=2, b=2):
     return np.random.beta(a, b) * (1 - 0) + 0
 
@@ -72,12 +67,19 @@ def propose_beta(current, a=2, b=2):
 def propose_uniform(current, lower=0, upper=1):
     return np.random.uniform(lower, upper)
 
+def propose_uniform_mu_gamma(current):
+    lower = current - current * 0.5
+    upper = current + current * 0.5
+    if lower > upper:
+        lower, upper = upper, lower
+    return np.random.uniform(lower, upper)
+
 
 def propose_inverse_gamma(current, alpha=2, beta=2):
     return 1 / np.random.gamma(alpha, scale=1/beta)
 
 
-def propose_t_distribution(current, df=3, scale=0.1):
+def propose_t_distribution(current, df=2, scale=0.1):
     return current + np.random.standard_t(df) * scale
 
 
@@ -143,6 +145,7 @@ def likelihood(theta, data):
 
 # SAMPLER
 def metropolis_hastings(n_samples, initial_theta, proposal_funcs, prior_funcs, likelihood_func, data):
+    np.random.seed(42) # set seed for reproducibility
     samples = np.zeros((n_samples, len(initial_theta)))
     samples[0, :] = initial_theta
     current_theta = initial_theta
@@ -171,8 +174,11 @@ def metropolis_hastings(n_samples, initial_theta, proposal_funcs, prior_funcs, l
 raw_data = pd.read_csv("data.csv")
 data = preprocess_data(raw_data)
 
+
+# Calculate the sample variance for the combined gene expression values
+combined_variance = raw_data[['gene1', 'gene2']].var().mean()
 # Initial parameter seeds
-initial_theta = [1, 0.5, np.mean(raw_data['gene1']), np.mean(raw_data['gene2']), np.mean(raw_data['gene1']), np.mean(raw_data['gene2'])]
+initial_theta = [combined_variance, 0.5, raw_data.loc[raw_data['group'] == 1, 'gene1'].mean(), raw_data.loc[raw_data['group'] == 1, 'gene2'].mean(), raw_data.loc[raw_data['group'] == 2, 'gene1'].mean(), raw_data.loc[raw_data['group'] == 2, 'gene2'].mean()]
 
 # Prior functions
 prior_funcs = [
@@ -186,14 +192,19 @@ prior_funcs = [
 
 # Proposal functions
 proposal_combinations = [
-    [propose_log_normal, propose_beta, propose_cauchy, propose_cauchy, propose_cauchy, propose_cauchy],
-    [propose_truncated_normal, propose_logistic_normal, propose_reflective_normal, propose_reflective_normal, propose_reflective_normal, propose_reflective_normal],
-    [propose_inverse_gamma, propose_uniform, propose_t_distribution, propose_t_distribution, propose_t_distribution, propose_t_distribution],
-    [propose_inverse_gamma, propose_logistic_normal, propose_t_distribution, propose_t_distribution, propose_t_distribution, propose_t_distribution],
-    [propose_log_normal, propose_beta, propose_reflective_normal, propose_reflective_normal, propose_reflective_normal, propose_reflective_normal],
-    [propose_uniform, propose_uniform, propose_uniform, propose_uniform, propose_uniform, propose_uniform],
-    [propose_log_normal, propose_beta, propose_normal, propose_normal, propose_beta, propose_beta],
-    [propose_inverse_gamma, propose_beta, propose_cauchy, propose_cauchy, propose_exponential, propose_exponential]
+    [propose_truncated_normal, propose_beta, propose_normal, propose_normal, propose_normal, propose_normal],
+    [propose_normal, propose_beta, propose_normal, propose_normal, propose_normal, propose_normal],
+    [propose_truncated_normal, propose_beta, propose_t_distribution, propose_t_distribution, propose_t_distribution, propose_t_distribution],
+    [propose_normal, propose_beta, propose_t_distribution, propose_t_distribution, propose_t_distribution, propose_t_distribution],
+    [propose_truncated_normal, propose_beta, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma],
+    [propose_normal, propose_beta, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma],
+    [propose_truncated_normal, propose_uniform, propose_normal, propose_normal, propose_normal, propose_normal],
+    [propose_normal, propose_uniform, propose_normal, propose_normal, propose_normal, propose_normal],
+    [propose_truncated_normal, propose_uniform, propose_t_distribution, propose_t_distribution, propose_t_distribution, propose_t_distribution],
+    [propose_normal, propose_uniform, propose_t_distribution, propose_t_distribution, propose_t_distribution, propose_t_distribution],
+    [propose_truncated_normal, propose_uniform, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma],
+    [propose_normal, propose_uniform, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma],
+    
 ]
 
 
