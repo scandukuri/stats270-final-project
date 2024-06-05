@@ -56,10 +56,9 @@ def propose_normal(mean=0, sd=1):
     x = norm(mean, sd).rvs()
     return x, norm(mean, sd).pdf(x)
 
-def propose_beta(alpha=1, beta=1):
-    x = beta(alpha, beta).rvs()
-    return x, beta(alpha, beta).pdf(x)
-
+def propose_beta(alphaparam=2, betaparam=2):
+    x = beta(alphaparam, betaparam).rvs()
+    return x, beta(alphaparam, betaparam).pdf(x)
 
 
 # PLOTTING DIAGNOSTICS
@@ -148,10 +147,10 @@ proposal_combinations = [
     [lambda: propose_normal(initial_theta[0], 1), lambda: propose_uniform(0, 1), lambda: propose_normal(initial_theta[2], 1), lambda: propose_normal(initial_theta[3], 1), lambda: propose_normal(initial_theta[4], 1), lambda: propose_normal(initial_theta[5], 1)],
     [propose_log_normal, lambda: propose_uniform(0, 1), lambda: propose_normal(initial_theta[2], 2), lambda: propose_normal(initial_theta[3], 2), lambda: propose_normal(initial_theta[4], 2), lambda: propose_normal(initial_theta[5], 2)],
     [lambda: propose_normal(initial_theta[0], 1), lambda: propose_uniform(0, 1), lambda: propose_normal(initial_theta[2], 2), lambda: propose_normal(initial_theta[3], 2), lambda: propose_normal(initial_theta[4], 2), lambda: propose_normal(initial_theta[5], 2)],
-    [propose_log_normal, lambda: propose_beta, lambda: propose_normal(initial_theta[2], 1), lambda: propose_normal(initial_theta[3], 1), lambda: propose_normal(initial_theta[4], 1), lambda: propose_normal(initial_theta[5], 1)],
-    [lambda: propose_normal(initial_theta[0], 1), lambda: propose_beta, lambda: propose_normal(initial_theta[2], 1), lambda: propose_normal(initial_theta[3], 1), lambda: propose_normal(initial_theta[4], 1), lambda: propose_normal(initial_theta[5], 1)],
-    [propose_log_normal, lambda: propose_beta, lambda: propose_normal(initial_theta[2], 2), lambda: propose_normal(initial_theta[3], 2), lambda: propose_normal(initial_theta[4], 2), lambda: propose_normal(initial_theta[5], 2)],
-    [lambda: propose_normal(initial_theta[0], 1), lambda: propose_beta, lambda: propose_normal(initial_theta[2], 2), lambda: propose_normal(initial_theta[3], 2), lambda: propose_normal(initial_theta[4], 2), lambda: propose_normal(initial_theta[5], 2)],
+    [propose_log_normal, propose_beta, lambda: propose_normal(initial_theta[2], 1), lambda: propose_normal(initial_theta[3], 1), lambda: propose_normal(initial_theta[4], 1), lambda: propose_normal(initial_theta[5], 1)],
+    [lambda: propose_normal(initial_theta[0], 1), propose_beta, lambda: propose_normal(initial_theta[2], 1), lambda: propose_normal(initial_theta[3], 1), lambda: propose_normal(initial_theta[4], 1), lambda: propose_normal(initial_theta[5], 1)],
+    [propose_log_normal, propose_beta, lambda: propose_normal(initial_theta[2], 2), lambda: propose_normal(initial_theta[3], 2), lambda: propose_normal(initial_theta[4], 2), lambda: propose_normal(initial_theta[5], 2)],
+    [lambda: propose_normal(initial_theta[0], 1), propose_beta, lambda: propose_normal(initial_theta[2], 2), lambda: propose_normal(initial_theta[3], 2), lambda: propose_normal(initial_theta[4], 2), lambda: propose_normal(initial_theta[5], 2)],
 ]
 
 

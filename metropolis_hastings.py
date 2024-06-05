@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from statsmodels.graphics.tsaplots import plot_acf
 import seaborn as sns
 import os
-
+from scipy.stats import norm, uniform, lognorm, beta
 
 
 # PLOTTING DIAGNOSTICS
@@ -53,9 +53,15 @@ def propose_truncated_normal(current, proposal_sd=0.1, lower=0.1, upper=10):
 def propose_normal(current, proposal_sd=0.1):
     return np.random.normal(current, proposal_sd)
 
-
-def propose_beta(current, a=2, b=1):
+def propose_beta(current, a=2, b=2):
     return np.random.beta(a, b) * (1 - 0) + 0
+
+def propose_beta_adaptive(current, a_base=2, b_base=2, scale_factor=10):
+    # Scale shape parameters based on the current value
+    alpha = a_base + scale_factor * current
+    beta_param = b_base + scale_factor * (1 - current)
+    proposed_value = beta.rvs(alpha, beta_param)
+    return proposed_value
 
 def propose_uniform(current, lower=0, upper=1):
     return np.random.uniform(lower, upper)
@@ -180,12 +186,12 @@ prior_funcs = [
 
 # Proposal functions
 proposal_combinations = [
-    [propose_truncated_normal, propose_beta, propose_normal, propose_normal, propose_normal, propose_normal],
-    [propose_normal, propose_beta, propose_normal, propose_normal, propose_normal, propose_normal],
-    [propose_truncated_normal, propose_beta, propose_t_distribution, propose_t_distribution, propose_t_distribution, propose_t_distribution],
-    [propose_normal, propose_beta, propose_t_distribution, propose_t_distribution, propose_t_distribution, propose_t_distribution],
-    [propose_truncated_normal, propose_beta, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma],
-    [propose_normal, propose_beta, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma],
+    [propose_truncated_normal, propose_beta_adaptive, propose_normal, propose_normal, propose_normal, propose_normal],
+    [propose_normal, propose_beta_adaptive, propose_normal, propose_normal, propose_normal, propose_normal],
+    [propose_truncated_normal, propose_beta_adaptive, propose_t_distribution, propose_t_distribution, propose_t_distribution, propose_t_distribution],
+    [propose_normal, propose_beta_adaptive, propose_t_distribution, propose_t_distribution, propose_t_distribution, propose_t_distribution],
+    [propose_truncated_normal, propose_beta_adaptive, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma],
+    [propose_normal, propose_beta_adaptive, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma, propose_uniform_mu_gamma],
     [propose_truncated_normal, propose_uniform, propose_normal, propose_normal, propose_normal, propose_normal],
     [propose_normal, propose_uniform, propose_normal, propose_normal, propose_normal, propose_normal],
     [propose_truncated_normal, propose_uniform, propose_t_distribution, propose_t_distribution, propose_t_distribution, propose_t_distribution],
