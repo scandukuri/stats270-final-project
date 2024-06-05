@@ -131,7 +131,7 @@ def likelihood(theta, data):
             mu = 0.5 * np.array([mu1, mu2]) + 0.5 * np.array([gamma1, gamma2])
         elif ti == 4:
             mu = tau * np.array([mu1, mu2]) + (1 - tau) * np.array([gamma1, gamma2])
-        
+        breakpoint()
         log_likelihood += -np.sum((yi - mu)**2) / (2 * sigma2) - np.log(2 * np.pi * sigma2)
     return log_likelihood
 

@@ -6,6 +6,7 @@ from statsmodels.graphics.tsaplots import plot_acf
 import seaborn as sns
 import os
 from scipy.stats import norm, invgamma, uniform
+from utils import *
 
 # PLOTTING DIAGNOSTICS
 def plot_diagnostics(sampler_num, samples, parameter_indices, parameter_names):
@@ -55,7 +56,7 @@ def prior_mu_gamma(value):
 def likelihood(theta, data, t):
     sigma2, tau, mu1, mu2, gamma1, gamma2 = theta
     log_likelihood = 0
-    for yi, ti in zip(data, t):
+    for yi, ti in data:
         if ti == 1:
             mu = np.array([mu1, mu2])
         elif ti == 2:
@@ -70,9 +71,9 @@ def likelihood(theta, data, t):
 
 # CONDITIONAL SAMPLERS
 def sample_sigma2(data, mu, gamma, tau, t):
-    n = len(data)
+    n = len(data)  # number of data points
     residual_sum = 0
-    for yi, ti in zip(data, t):
+    for yi, ti in data:
         if ti == 1:
             mu_i = mu
         elif ti == 2:
@@ -83,30 +84,35 @@ def sample_sigma2(data, mu, gamma, tau, t):
             mu_i = tau * mu + (1 - tau) * gamma
         residual_sum += np.sum((yi - mu_i) ** 2)
     
-    alpha = (n * data.shape[1]) / 2
+    alpha = n / 2
     beta = residual_sum / 2
     return invgamma.rvs(alpha, scale=beta)
 
+
 def sample_tau(data, mu, gamma, sigma2, t):
-    group_4_data = data[t == 4]
-    n_group_4 = len(group_4_data)
-    if n_group_4 == 0:
-        return np.random.uniform(0, 1)
+    group_4_data = np.array([yi for yi, ti in data if ti == 4])  # Filter and convert to numpy array
+    n_group_4 = group_4_data.shape[0]
     
     mu_diff = mu - gamma
-    numerator = np.sum((group_4_data @ mu_diff) / sigma2)
-    denominator = np.sum((mu_diff ** 2) / sigma2)
+    numerator = np.sum(group_4_data @ mu_diff / sigma2)
+    denominator = np.sum(mu_diff ** 2 / sigma2)
     mean_tau = numerator / denominator
     variance_tau = 1 / denominator
     
-    return np.random.normal(mean_tau, np.sqrt(variance_tau))
+    # Ensure tau is within the [0, 1] range
+    tau_sample = np.random.normal(mean_tau, np.sqrt(variance_tau))
+    print(tau_sample)
+    print(np.clip(tau_sample, 0, 1))
+    return np.clip(tau_sample, 0, 1)
+
 
 def sample_mu(data, gamma, sigma2, tau, t):
-    mu = np.zeros(data.shape[1])
-    for i in range(data.shape[1]):
+    data_array = np.array([yi for yi, ti in data])  # Extract only the data points
+    mu = np.zeros(data_array.shape[1])
+    for i in range(data_array.shape[1]):
         numerator = 0
         denominator = 0
-        for yi, ti in zip(data, t):
+        for yi, ti in data:
             if ti == 1:
                 numerator += yi[i]
                 denominator += 1
@@ -121,12 +127,14 @@ def sample_mu(data, gamma, sigma2, tau, t):
         mu[i] = np.random.normal(mean, np.sqrt(variance))
     return mu
 
+
 def sample_gamma(data, mu, sigma2, tau, t):
-    gamma = np.zeros(data.shape[1])
-    for i in range(data.shape[1]):
+    data_array = np.array([yi for yi, ti in data])  # Extract only the data points
+    gamma = np.zeros(data_array.shape[1])
+    for i in range(data_array.shape[1]):
         numerator = 0
         denominator = 0
-        for yi, ti in zip(data, t):
+        for yi, ti in data:
             if ti == 2:
                 numerator += yi[i]
                 denominator += 1
