@@ -8,16 +8,9 @@ import seaborn as sns
 import os
 
 
+
 # PLOTTING DIAGNOSTICS
 def plot_diagnostics(sampler_num, samples, parameter_indices, parameter_names):
-    """
-    Plots diagnostics for selected parameters in the Metropolis-Hastings samples.
-
-    Args:
-    samples (numpy.ndarray): The array of samples.
-    parameter_indices (list): List of indices for the parameters to be diagnosed.
-    parameter_names (list): List of names for the parameters.
-    """
     num_params = len(parameter_indices)
     fig, axes = plt.subplots(num_params, 3, figsize=(15, 1.5*num_params))
 
@@ -47,6 +40,7 @@ def plot_diagnostics(sampler_num, samples, parameter_indices, parameter_names):
     plt.savefig(f"plots/metropolis_hastings/diagnostics_sampler_{sampler_num}.png")
 
 
+
 # PROPOSAL DISTRIBUTIONS
 def propose_log_normal(current, proposal_sd=0.1):
     return np.exp(np.random.normal(np.log(current), proposal_sd))
@@ -60,9 +54,8 @@ def propose_normal(current, proposal_sd=0.1):
     return np.random.normal(current, proposal_sd)
 
 
-def propose_beta(current, a=2, b=2):
+def propose_beta(current, a=2, b=1):
     return np.random.beta(a, b) * (1 - 0) + 0
-
 
 def propose_uniform(current, lower=0, upper=1):
     return np.random.uniform(lower, upper)
@@ -74,14 +67,11 @@ def propose_uniform_mu_gamma(current):
         lower, upper = upper, lower
     return np.random.uniform(lower, upper)
 
-
 def propose_inverse_gamma(current, alpha=2, beta=2):
     return 1 / np.random.gamma(alpha, scale=1/beta)
 
-
 def propose_t_distribution(current, df=2, scale=0.1):
     return current + np.random.standard_t(df) * scale
-
 
 def propose_reflective_normal(current, proposal_sd=0.1, lower=None, upper=None):
     proposal = np.random.normal(current, proposal_sd)
@@ -91,13 +81,11 @@ def propose_reflective_normal(current, proposal_sd=0.1, lower=None, upper=None):
         proposal = upper - (proposal - upper)
     return proposal
 
-
 def propose_logistic_normal(current, proposal_sd=0.1):
     from scipy.special import expit, logit
     logit_current = logit(current)
     proposal = np.random.normal(logit_current, proposal_sd)
     return expit(proposal)
-
 
 def propose_exponential(current, scale=1.0):
 
@@ -105,7 +93,6 @@ def propose_exponential(current, scale=1.0):
     proposal += current - scale 
 
     return proposal
-
 
 
 
@@ -122,6 +109,7 @@ def prior_tau(tau):
 
 def prior_mu_gamma(value):
     return 0 
+
 
 
 # LIKELIHOOD FUNCTION
@@ -145,7 +133,7 @@ def likelihood(theta, data):
 
 # SAMPLER
 def metropolis_hastings(n_samples, initial_theta, proposal_funcs, prior_funcs, likelihood_func, data):
-    np.random.seed(42) # set seed for reproducibility
+    np.random.seed(42)  # Set seed for reproducibility
     samples = np.zeros((n_samples, len(initial_theta)))
     samples[0, :] = initial_theta
     current_theta = initial_theta
@@ -210,7 +198,7 @@ proposal_combinations = [
 
 
 
-# Run sampler and save diagnostics
+# Run sampler, save diagnostics
 for i, proposal_funcs in enumerate(proposal_combinations):
     print(f"Running sampler {i}")
     samples = metropolis_hastings(10000, initial_theta, proposal_funcs, prior_funcs, likelihood, data)
