@@ -23,7 +23,7 @@ def prior_tau(tau):
     return -np.inf
 
 def prior_mu_gamma(value):
-    return 0
+    return 0  # log of improper prior 1 is just 0
 
 
 # LIKELIHOOD FUNCTION
@@ -43,7 +43,8 @@ def likelihood(theta, data):
         log_likelihood += -np.sum((yi - mu)**2) / (2 * sigma2) - np.log(2 * np.pi * sigma2)
     return log_likelihood
 
-# Proposal distribution functions
+
+# PROPOSAL DISTRIBUTIONS
 def propose_log_normal():
     x = lognorm(s=1).rvs()
     return x, lognorm(s=1).pdf(x)
@@ -125,7 +126,7 @@ def importance_sampling(n_samples, proposal_funcs, prior_funcs, likelihood_func,
 raw_data = pd.read_csv("data.csv")
 data = preprocess_data(raw_data)
 
-# Calculate the sample variance for the combined gene expression values
+# Calculate the average sample variance for the combined gene expression values
 combined_variance = raw_data[['gene1', 'gene2']].var().mean()
 
 # Initial parameter seeds
@@ -145,7 +146,7 @@ prior_funcs = [
     prior_mu_gamma
 ]
 
-# Proposal functions combinations
+# Proposal function combinations
 proposal_combinations = [
     [propose_log_normal, lambda: propose_uniform(0, 1), lambda: propose_normal(initial_theta[2], 1), lambda: propose_normal(initial_theta[3], 1), lambda: propose_normal(initial_theta[4], 1), lambda: propose_normal(initial_theta[5], 1)],
     [lambda: propose_normal(initial_theta[0], 1), lambda: propose_uniform(0, 1), lambda: propose_normal(initial_theta[2], 1), lambda: propose_normal(initial_theta[3], 1), lambda: propose_normal(initial_theta[4], 1), lambda: propose_normal(initial_theta[5], 1)],

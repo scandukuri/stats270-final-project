@@ -55,7 +55,8 @@ def prior_tau(tau):
     return -np.inf
 
 def prior_mu_gamma(value):
-    return 0
+    return 0  # log of improper prior 1 is just 0
+
 
 # LIKELIHOOD FUNCTION
 def likelihood(theta, data, t):
@@ -73,6 +74,7 @@ def likelihood(theta, data, t):
         
         log_likelihood += -np.sum((yi - mu)**2) / (2 * sigma2) - np.log(2 * np.pi * sigma2)
     return log_likelihood
+
 
 # CONDITIONAL SAMPLERS
 def sample_sigma2(data, mu, gamma, tau, t):
@@ -93,25 +95,26 @@ def sample_sigma2(data, mu, gamma, tau, t):
     beta = residual_sum / 2
     return invgamma.rvs(alpha, scale=beta)
 
+
 def sample_tau(data, mu, gamma, sigma2, t):
-    group_4_data = np.array([yi for yi, ti in data if ti == 4])  # Filter and convert to numpy array
-    
+    group_4_data = np.array([yi for yi, ti in data if ti == 4])  # Extract data points for group 4
+    n_group_4 = group_4_data.shape[0]
+
     mu_diff = mu - gamma
-    numerator = np.sum(group_4_data @ mu_diff / sigma2)
+
+    numerator = np.sum((group_4_data @ mu_diff) / sigma2)
     denominator = np.sum(mu_diff ** 2 / sigma2)
+
     mean_tau = numerator / denominator
     variance_tau = 1 / denominator
-    
-    # Sample tau from the normal distribution with the calculated mean and variance
     tau_sample = np.random.normal(mean_tau, np.sqrt(variance_tau))
-    
-    # Ensure tau is within the [0, 1] range by clipping
     tau_clipped = np.clip(tau_sample, 0, 1)
-    
+
     return tau_clipped
 
+
 def sample_mu(data, gamma, sigma2, tau, t):
-    data_array = np.array([yi for yi, ti in data])  # Extract only the data points
+    data_array = np.array([yi for yi, ti in data])
     mu = np.zeros(data_array.shape[1])
     for i in range(data_array.shape[1]):
         numerator = 0
@@ -131,8 +134,9 @@ def sample_mu(data, gamma, sigma2, tau, t):
         mu[i] = np.random.normal(mean, np.sqrt(variance))
     return mu
 
+
 def sample_gamma(data, mu, sigma2, tau, t):
-    data_array = np.array([yi for yi, ti in data])  # Extract only the data points
+    data_array = np.array([yi for yi, ti in data]) 
     gamma = np.zeros(data_array.shape[1])
     for i in range(data_array.shape[1]):
         numerator = 0
@@ -151,6 +155,7 @@ def sample_gamma(data, mu, sigma2, tau, t):
         mean = numerator / denominator
         gamma[i] = np.random.normal(mean, np.sqrt(variance))
     return gamma
+
 
 # SAMPLER
 def gibbs_sampling(n_samples, initial_theta, data, t):
@@ -175,11 +180,13 @@ def gibbs_sampling(n_samples, initial_theta, data, t):
 
 # Load data
 raw_data = pd.read_csv("data.csv")
-data = preprocess_data(raw_data)  # Ensure this function processes raw_data into (y, t) tuples
+data = preprocess_data(raw_data) 
 t = raw_data['group'].values
 
-# Calculate the sample variance for the combined gene expression values
+
+# Calculate average sample variance for the combined gene expression values
 combined_variance = raw_data[['gene1', 'gene2']].var().mean()
+
 
 # Initial parameter seeds
 initial_theta = [combined_variance, 0.5, 
@@ -188,10 +195,8 @@ initial_theta = [combined_variance, 0.5,
                  raw_data.loc[raw_data['group'] == 2, 'gene1'].mean(), 
                  raw_data.loc[raw_data['group'] == 2, 'gene2'].mean()]
 
+
 # Run Gibbs sampler and save diagnostics
 print("Running Gibbs sampler")
 samples = gibbs_sampling(10000, initial_theta, data, t)
 plot_diagnostics(0, samples, list(range(0, len(initial_theta))), ['sigma^2', 'tau', 'mu1', 'mu2', 'gamma1', 'gamma2'])
-
-# Save samples
-np.save("gibbs_samples.npy", samples)

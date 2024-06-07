@@ -118,7 +118,7 @@ def prior_tau(tau):
     return -np.inf
 
 def prior_mu_gamma(value):
-    return 0 
+    return 0  # log of improper prior 1 is just 0
 
 
 
