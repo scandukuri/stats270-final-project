@@ -7,6 +7,7 @@ import seaborn as sns
 import os
 from scipy.stats import norm, invgamma, uniform
 from utils import *
+import json
 
 # PLOTTING DIAGNOSTICS
 def plot_diagnostics(sampler_num, samples, parameter_indices, parameter_names):
@@ -37,6 +38,10 @@ def plot_diagnostics(sampler_num, samples, parameter_indices, parameter_names):
     if not os.path.exists("plots/gibbs_sampling"):
         os.makedirs("plots/gibbs_sampling")
     plt.savefig(f"plots/gibbs_sampling/diagnostics_sampler_{sampler_num}.png")
+    if not os.path.exists("samples/gibbs_sampling"):
+        os.makedirs("samples/gibbs_sampling")
+    with open(f'samples/gibbs_sampling/samples_sampler_{sampler_num}.json', 'w') as f:
+        json.dump(samples.tolist(), f)
 
 # PRIOR DISTRIBUTIONS
 def prior_sigma2(sigma2):
