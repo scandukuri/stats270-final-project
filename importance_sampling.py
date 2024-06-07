@@ -63,7 +63,7 @@ def propose_beta(alphaparam=2, betaparam=2):
 
 
 # PLOTTING DIAGNOSTICS
-def plot_diagnostics(sampler_num, samples, parameter_indices, parameter_names):
+def plot_diagnostics(sampler_num, samples, weights, parameter_indices, parameter_names):
     num_params = len(parameter_indices)
     fig, axes = plt.subplots(num_params, 3, figsize=(15, 1.5*num_params))
 
@@ -95,6 +95,12 @@ def plot_diagnostics(sampler_num, samples, parameter_indices, parameter_names):
         os.makedirs("samples/importance_sampling")
     with open(f'samples/importance_sampling/samples_sampler_{sampler_num}.json', 'w') as f:
         json.dump(samples.tolist(), f)
+    with open(f'samples/importance_sampling/weights_sampler_{sampler_num}.json', 'w') as f:
+        json.dump(weights.tolist(), f)
+        
+    weighted_final_samples = compute_weighted_samples(samples, weights)
+    with open(f'samples/importance_sampling/final_weights_samples_sampler_{sampler_num}.json', 'w') as f:
+        json.dump(weighted_final_samples.tolist(), f)
 
 
 
@@ -159,9 +165,11 @@ proposal_combinations = [
 ]
 
 
+
+
 results = []
 for num, proposal_funcs in enumerate(proposal_combinations):
     print(f"Running sampler {num}")
     samples, weights = importance_sampling(10000, proposal_funcs, prior_funcs, likelihood, data)
     results.append((samples, weights))
-    plot_diagnostics(num, samples, [0, 1, 2, 3, 4, 5], ['sigma2', 'tau', 'mu1', 'mu2', 'gamma1', 'gamma2'])
+    plot_diagnostics(num, samples, weights, [0, 1, 2, 3, 4, 5], ['sigma2', 'tau', 'mu1', 'mu2', 'gamma1', 'gamma2'])
