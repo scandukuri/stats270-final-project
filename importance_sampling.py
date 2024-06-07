@@ -8,7 +8,7 @@ from statsmodels.graphics.tsaplots import plot_acf
 import seaborn as sns
 import os
 from scipy.stats import norm, uniform, lognorm, beta
-
+import json
 
 
 # PRIOR DISTRIBUTIONS
@@ -90,6 +90,10 @@ def plot_diagnostics(sampler_num, samples, parameter_indices, parameter_names):
     if not os.path.exists("plots/importance_sampling"):
         os.makedirs("plots/importance_sampling")
     plt.savefig(f"plots/importance_sampling/diagnostics_sampler_{sampler_num}.png")
+    if not os.path.exists("samples/importance_sampling"):
+        os.makedirs("samples/importance_sampling")
+    with open(f'samples/importance_sampling/samples_sampler_{sampler_num}.json', 'w') as f:
+        json.dump(samples.tolist(), f)
 
 
 

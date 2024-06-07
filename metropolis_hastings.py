@@ -7,6 +7,7 @@ from statsmodels.graphics.tsaplots import plot_acf
 import seaborn as sns
 import os
 from scipy.stats import norm, uniform, lognorm, beta
+import json
 
 
 # PLOTTING DIAGNOSTICS
@@ -38,7 +39,10 @@ def plot_diagnostics(sampler_num, samples, parameter_indices, parameter_names):
     if not os.path.exists("plots/metropolis_hastings"):
         os.makedirs("plots/metropolis_hastings")
     plt.savefig(f"plots/metropolis_hastings/diagnostics_sampler_{sampler_num}.png")
-
+    if not os.path.exists("samples/metropolis_hastings"):
+        os.makedirs("samples/metropolis_hastings")
+    with open(f'samples/metropolis_hastings/samples_sampler_{sampler_num}.json', 'w') as f:
+        json.dump(samples.tolist(), f)
 
 
 # PROPOSAL DISTRIBUTIONS
@@ -131,7 +135,6 @@ def likelihood(theta, data):
             mu = 0.5 * np.array([mu1, mu2]) + 0.5 * np.array([gamma1, gamma2])
         elif ti == 4:
             mu = tau * np.array([mu1, mu2]) + (1 - tau) * np.array([gamma1, gamma2])
-        breakpoint()
         log_likelihood += -np.sum((yi - mu)**2) / (2 * sigma2) - np.log(2 * np.pi * sigma2)
     return log_likelihood
 
